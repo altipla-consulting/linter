@@ -3,7 +3,7 @@
 
 Opinionated linter for Go source code.
 
-It is using [revive](https://github.com/mgechev/revive) underneath. We recommend using it directly instead of the internal customization on top of it you have in this repo.
+**WARNING:** It uses [revive](https://github.com/mgechev/revive) underneath. We recommend using revive directly instead of our internal customization on top of it.
 
 
 ## Install

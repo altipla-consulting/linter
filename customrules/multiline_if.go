@@ -18,7 +18,7 @@ func (r *MultilineIfRule) Apply(file *lint.File, _ lint.Arguments) []lint.Failur
 }
 
 func (r *MultilineIfRule) Name() string {
-	return "multiline-if"
+	return "altipla-multiline-if"
 }
 
 type multilineIf struct {
