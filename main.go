@@ -38,7 +38,6 @@ var standardRules = []ruleConfig{
 		new(rule.ImportsBlacklistRule),
 		lint.RuleConfig{
 			Arguments: []interface{}{
-				"errors",
 				"log",
 				"google/martian/log",
 				"github.com/juju/errors",
