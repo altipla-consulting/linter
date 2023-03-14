@@ -9,7 +9,6 @@ import (
 	"github.com/mgechev/revive/rule"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
-	"libs.altipla.consulting/errors"
 
 	"github.com/altipla-consulting/linter/customrules"
 )
@@ -115,7 +114,7 @@ var customRules = []ruleConfig{
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatal(errors.Stack(err))
+		log.Fatal(err)
 	}
 }
 
@@ -138,7 +137,7 @@ func run() error {
 
 	revive, err := revivelib.New(cnf, true, 0, extra...)
 	if err != nil {
-		return errors.Trace(err)
+		return err
 	}
 
 	var includes []*revivelib.LintPattern
@@ -147,12 +146,12 @@ func run() error {
 	}
 	failuresChan, err := revive.Lint(includes...)
 	if err != nil {
-		return errors.Trace(err)
+		return err
 	}
 
 	failures, exitCode, err := revive.Format("stylish", failuresChan)
 	if err != nil {
-		return errors.Trace(err)
+		return err
 	}
 	fmt.Println(failures)
 	os.Exit(exitCode)

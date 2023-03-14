@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/mgechev/revive/lint"
-	"libs.altipla.consulting/collections"
+	"golang.org/x/exp/slices"
 )
 
 var knownNameExceptions = map[string]bool{
@@ -102,7 +102,7 @@ func check(id *ast.Ident, thing string, w *lintNames) {
 	if knownNameExceptions[id.Name] {
 		return
 	}
-	if collections.HasString(w.whitelist, id.Name) {
+	if slices.Contains(w.whitelist, id.Name) {
 		return
 	}
 
