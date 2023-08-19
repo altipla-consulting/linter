@@ -40,6 +40,7 @@ var standardRules = []ruleConfig{
 				"log",
 				"google/martian/log",
 				"github.com/juju/errors",
+				"github.com/pingcap/errors",
 			},
 		},
 	},
