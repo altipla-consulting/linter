@@ -154,7 +154,9 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(failures)
+	if failures != "" {
+		fmt.Println(failures)
+	}
 	os.Exit(exitCode)
 
 	return nil
