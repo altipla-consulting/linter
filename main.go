@@ -41,6 +41,7 @@ var standardRules = []ruleConfig{
 				"google/martian/log",
 				"github.com/juju/errors",
 				"github.com/pingcap/errors",
+				"golang.org/x/exp/slog",
 			},
 		},
 	},
