@@ -3,6 +3,7 @@ module github.com/altipla-consulting/linter
 go 1.18
 
 require (
+	github.com/kisielk/errcheck v1.7.0
 	github.com/mgechev/revive v1.3.7
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
@@ -20,6 +21,8 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
+	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/tools v0.21.0 // indirect
 )

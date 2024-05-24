@@ -2,9 +2,13 @@ package main
 
 import (
 	"fmt"
+	"go/token"
 	"log/slog"
 	"os"
+	"regexp"
+	"sync"
 
+	"github.com/kisielk/errcheck/errcheck"
 	"github.com/mgechev/revive/lint"
 	"github.com/mgechev/revive/revivelib"
 	"github.com/mgechev/revive/rule"
@@ -36,7 +40,7 @@ var standardRules = []ruleConfig{
 	{
 		new(rule.ImportsBlocklistRule),
 		lint.RuleConfig{
-			Arguments: []interface{}{
+			Arguments: []any{
 				"log",
 				"google/martian/log",
 				"github.com/juju/errors",
@@ -48,7 +52,7 @@ var standardRules = []ruleConfig{
 	{
 		new(rule.FunctionResultsLimitRule),
 		lint.RuleConfig{
-			Arguments: []interface{}{
+			Arguments: []any{
 				int64(3),
 			},
 		},
@@ -56,7 +60,7 @@ var standardRules = []ruleConfig{
 	{
 		new(rule.UnhandledErrorRule),
 		lint.RuleConfig{
-			Arguments: []interface{}{
+			Arguments: []any{
 				"fmt.Fprint",
 				"fmt.Fprintf",
 				"fmt.Fprintln",
@@ -70,20 +74,20 @@ var standardRules = []ruleConfig{
 	{
 		new(rule.DeferRule),
 		lint.RuleConfig{
-			Arguments: []interface{}{
-				[]interface{}{"call-chain", "method-call", "recover", "return"},
+			Arguments: []any{
+				[]any{"call-chain", "method-call", "recover", "return"},
 			},
 		},
 	},
 	{
 		new(customrules.VarNamingRule),
 		lint.RuleConfig{
-			Arguments: []interface{}{
-				[]interface{}{
+			Arguments: []any{
+				[]any{
 					"DANGER_FlushAllKeysFromDatabase",
 					"DANGER_FlushAllKeys",
 				},
-				[]interface{}{
+				[]any{
 					"PDF",
 					"CSV",
 				},
@@ -100,12 +104,12 @@ var customRules = []ruleConfig{
 	{
 		new(customrules.VarNamingRule),
 		lint.RuleConfig{
-			Arguments: []interface{}{
-				[]interface{}{
+			Arguments: []any{
+				[]any{
 					"DANGER_FlushAllKeysFromDatabase",
 					"DANGER_FlushAllKeys",
 				},
-				[]interface{}{
+				[]any{
 					"PDF",
 					"CSV",
 				},
@@ -147,12 +151,52 @@ func run() error {
 	for _, arg := range flag.Args() {
 		includes = append(includes, revivelib.Include(arg))
 	}
-	failuresChan, err := revive.Lint(includes...)
+	failuresCh, err := revive.Lint(includes...)
 	if err != nil {
 		return err
 	}
 
-	failures, exitCode, err := revive.Format("stylish", failuresChan)
+	failuresCh2 := make(chan lint.Failure)
+	checker := &errcheck.Checker{
+		Exclusions: errcheck.Exclusions{
+			Packages: []string{
+				"fmt",
+				"github.com/spf13/cobra",
+			},
+			SymbolRegexpsByPackage: map[string]*regexp.Regexp{
+				"": regexp.MustCompile("Close|MarkFlagRequired|SetLogger"),
+			},
+			BlankAssignments: true,
+			TypeAssertions:   true,
+		},
+	}
+	pkgs, err := checker.LoadPackages(flag.Args()...)
+	if err != nil {
+		return err
+	}
+	go func() {
+		reported := make(map[token.Position]bool)
+		for _, pkg := range pkgs {
+			for _, unchecked := range checker.CheckPackage(pkg).UncheckedErrors {
+				if reported[unchecked.Pos] {
+					continue
+				}
+				reported[unchecked.Pos] = true
+
+				failuresCh2 <- lint.Failure{
+					Confidence: 1,
+					RuleName:   "altipla-errcheck",
+					Failure:    "unchecked error",
+					Position: lint.FailurePosition{
+						Start: unchecked.Pos,
+					},
+				}
+			}
+		}
+		close(failuresCh2)
+	}()
+
+	failures, exitCode, err := revive.Format("stylish", multiplex(failuresCh, failuresCh2))
 	if err != nil {
 		return err
 	}
@@ -162,4 +206,28 @@ func run() error {
 	os.Exit(exitCode)
 
 	return nil
+}
+
+func multiplex(channels ...<-chan lint.Failure) <-chan lint.Failure {
+	var wg sync.WaitGroup
+	out := make(chan lint.Failure)
+
+	output := func(c <-chan lint.Failure) {
+		for failure := range c {
+			out <- failure
+		}
+		wg.Done()
+	}
+
+	wg.Add(len(channels))
+	for _, c := range channels {
+		go output(c)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	return out
 }
