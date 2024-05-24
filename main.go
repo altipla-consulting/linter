@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/mgechev/revive/lint"
 	"github.com/mgechev/revive/revivelib"
 	"github.com/mgechev/revive/rule"
-	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 
 	"github.com/altipla-consulting/linter/customrules"
@@ -34,7 +34,7 @@ var standardRules = []ruleConfig{
 	{new(rule.ExportedRule), lint.RuleConfig{Disabled: true}},
 	{new(rule.VarNamingRule), lint.RuleConfig{Disabled: true}},
 	{
-		new(rule.ImportsBlacklistRule),
+		new(rule.ImportsBlocklistRule),
 		lint.RuleConfig{
 			Arguments: []interface{}{
 				"log",
@@ -116,7 +116,8 @@ var customRules = []ruleConfig{
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 }
 
