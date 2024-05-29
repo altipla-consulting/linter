@@ -164,7 +164,7 @@ func run() error {
 				"github.com/spf13/cobra",
 			},
 			SymbolRegexpsByPackage: map[string]*regexp.Regexp{
-				"": regexp.MustCompile("Close|MarkFlagRequired|SetLogger"),
+				"": regexp.MustCompile("Close|MarkFlagRequired|SetLogger|Rollback"),
 			},
 			BlankAssignments: true,
 			TypeAssertions:   true,
